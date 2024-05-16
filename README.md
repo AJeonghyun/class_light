@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # class_light
 
 A new Flutter project.
@@ -17,4 +16,4 @@ For help getting started with Flutter development, view the
 samples, guidance on mobile development, and a full API reference.
 =======
 # class_light
->>>>>>> 4db23fe041717ec64e219796c6e19a4ddf5571c4
+
