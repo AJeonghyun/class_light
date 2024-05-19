@@ -225,7 +225,7 @@ captures/
 *.keystore
 
 # Google Services (e.g. APIs or Firebase)
-# google-services.json
+google-services.json
 
 # Android Patch
 gen-external-apklibs
@@ -307,5 +307,6 @@ fabric.properties
 firebase.json
 ios/Runner/GoogleService-Info.plist
 lib/firebase_options.dart
+
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,flutter,firebase,dart,darteditor,git,androidstudio,visualstudiocode
