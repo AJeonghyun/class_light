@@ -1,6 +1,13 @@
 # Created by https://www.toptal.com/developers/gitignore/api/darteditor,dart,flutter,firebase,android,androidstudio,git
 # Edit at https://www.toptal.com/developers/gitignore?templates=darteditor,dart,flutter,firebase,android,androidstudio,git
 
+
+# Do not detect
+*.cc -linguist-detectable
+*.cpp -linguist-detectable
+
+# Detect
+*.dart linguist-detectable
 ### Android ###
 # Gradle files
 .gradle/
@@ -82,6 +89,7 @@ doc/api/
 .idea
 **/node_modules/*
 **/.firebaserc
+firebase.json
 
 ### Firebase Patch ###
 .runtimeconfig.json
