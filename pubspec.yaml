@@ -38,6 +38,7 @@ dependencies:
   share_plus: ^7.2.2
   firebase_core: ^2.27.0
   cloud_firestore: ^4.15.8
+  firebase_auth: ^4.17.8
 
 dev_dependencies:
   flutter_test:
@@ -63,9 +64,12 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+     - assets/logo1.png
+     - assets/logo2.png
+     - assets/bad.png
+     - assets/normal.png
+     - assets/good.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

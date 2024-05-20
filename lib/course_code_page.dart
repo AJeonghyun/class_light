@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'home.dart';
 
-
 class CourseCodePage extends StatelessWidget {
   final int courseCode;
 
@@ -67,7 +66,7 @@ class CourseCodePage extends StatelessWidget {
                 // 새로운 페이지로 이동
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => HomePage()),
+                  MaterialPageRoute(builder: (context) => HomePage(courseCode: 2013.toString())),
                 );
               },
               style: ElevatedButton.styleFrom(

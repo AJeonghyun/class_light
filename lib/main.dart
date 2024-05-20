@@ -1,170 +1,142 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:class_light/courseInfo.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'dart:math';
-import 'package:flutter/services.dart';
-import 'package:share_plus/share_plus.dart';
-import 'course_code_page.dart';
-import 'firebase_options.dart'; // 새로 만든 파일을 가져옵니다
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Flutter 바인딩 초기화
+import 'enterPage.dart';
+import 'firebase_options.dart';
 
-  // Firebase 초기화
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
-  // 앱 실행
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
-
-
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Course Information',
-      home: CourseForm(),
+      title: 'Flutter Demo',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+      ),
+      home: const SplashScreen(),
     );
   }
 }
 
-class CourseForm extends StatefulWidget {
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({Key? key}) : super(key: key);
+
   @override
-  _CourseFormState createState() => _CourseFormState();
+  _SplashScreenState createState() => _SplashScreenState();
 }
 
-class _CourseFormState extends State<CourseForm> {
-  final _formKey = GlobalKey<FormState>();
-  String instructorName = '';
-  String courseName = '';
-  String semester = '';
-  int courseCode = 0; // 코드 추가
-
+class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    generateCode(); // 코드 생성 함수 호출
-  }
-
-  // 코드 생성 함수
-  void generateCode() {
-    setState(() {
-      courseCode = (Random().nextInt(9000) + 1000); // 랜덤 코드 생성
-    });
+    Future.delayed(
+      Duration(seconds: 2),
+          () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+              const MyHomePage(title: 'Flutter Demo Home Page')),
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('수업 정보 입력'),
+      body: Center(
+        child: Image.asset(
+          'assets/logo1.png',
+          width: 200, // 너비를 200으로 설정
+          height: 200, // 높이를 200으로 설정
+        ),
       ),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                '수업 정보',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 16.0),
-              Text(
-                '강의자',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              TextFormField(
-                decoration: InputDecoration(
-                  hintText: '강의자 이름을 입력하세요',
-                  floatingLabelBehavior: FloatingLabelBehavior.auto,
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key, required this.title});
+  final String title;
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            Image.asset(
+              'assets/logo2.png',
+              width: 200, // 너비를 200으로 설정
+              height: 200, // 높이를 200으로 설정
+            ),
+            const SizedBox(height: 20,),
+            const Text('What do you want to do about the class?'),
+            const SizedBox(height: 50,),
+            const Text('Do you have a class code?'),
+            InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => EnterPage()),
+                );
+              },
+              child: Container(
+                width: 300,
+                height: 120,
+                decoration: BoxDecoration(
+                    color: Colors.yellow,
+                    borderRadius: BorderRadius.circular(20)
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return '강의자 이름을 입력하세요';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  instructorName = value ?? '';
-                },
-              ),
-              SizedBox(height: 16.0),
-              Text(
-                '수업 이름',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              TextFormField(
-                decoration: InputDecoration(
-                  hintText: '수업 이름을 입력하세요',
-                  floatingLabelBehavior: FloatingLabelBehavior.auto,
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return '수업 이름을 입력하세요';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  courseName = value ?? '';
-                },
-              ),
-              SizedBox(height: 16.0),
-              Text(
-                '수강 학기',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              TextFormField(
-                decoration: InputDecoration(
-                  hintText: '수강 학기를 입력하세요',
-                  floatingLabelBehavior: FloatingLabelBehavior.auto,
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return '수강 학기를 입력하세요';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  semester = value ?? '';
-                },
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(vertical: 16.0),
-                child: Center(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      if (_formKey.currentState?.validate() ?? false) {
-                        _formKey.currentState?.save();
-                        try {
-                          await FirebaseFirestore.instance.collection('room').doc(courseCode.toString()).set({
-                            'lecture': courseName,
-                            'professor': instructorName,
-                          });
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => CourseCodePage(courseCode: courseCode),
-                            ),
-                          );
-                        } catch (e) {
-                          print('FirebaseException occurred: $e');
-                        }
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      primary: Color(0xFF01FF02),
-                    ),
-                    child: Text('OK'),
-                  ),
+                child: const Center(
+                  child: Text('Enter',style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold),),
                 ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 20,),
+            const Text('Do you have a class code?'),
+            InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => courseInfoPage()),
+                );
+              },
+              child: Container(
+                width: 300,
+                height: 120,
+                decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(20)
+                ),
+                child: const Center(
+                  child: Text('Create',style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold),),
+                ),
+              ),
+            ),
+
+          ],
         ),
       ),
     );
