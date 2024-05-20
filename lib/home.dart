@@ -17,6 +17,7 @@ class _HomePageState extends State<HomePage> {
   int greenLightCount = 0;
   bool isLoading = true;
   String lecture = '';
+  List<String> questions = [];
 
   @override
   void initState() {
@@ -32,17 +33,14 @@ class _HomePageState extends State<HomePage> {
           .get();
 
       if (document.exists) {
+        var data = document.data() as Map<String, dynamic>?;
+
         setState(() {
-          redLightCount = (document.data() as Map<String, dynamic>)['redLight'] != null
-              ? (document['redLight'] as List).length
-              : 0;
-          yellowLightCount = (document.data() as Map<String, dynamic>)['yellowLight'] != null
-              ? (document['yellowLight'] as List).length
-              : 0;
-          greenLightCount = (document.data() as Map<String, dynamic>)['greenLight'] != null
-              ? (document['greenLight'] as List).length
-              : 0;
-          lecture = document['lecture'];
+          redLightCount = data?['redLight'] != null ? (data!['redLight'] as List).length : 0;
+          yellowLightCount = data?['yellowLight'] != null ? (data!['yellowLight'] as List).length : 0;
+          greenLightCount = data?['greenLight'] != null ? (data!['greenLight'] as List).length : 0;
+          lecture = data?['lecture'] ?? '';
+          questions = data?['question'] != null ? List<String>.from(data!['question']) : [];
           isLoading = false;
         });
       } else {
@@ -51,6 +49,37 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       print('Error fetching data: $e');
     }
+  }
+
+  void _showQuestionsDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Questions'),
+          content: Container(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: questions.length,
+              itemBuilder: (BuildContext context, int index) {
+                return ListTile(
+                  title: Text(questions[index]),
+                );
+              },
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Close'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -71,6 +100,10 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            IconButton(
+              icon: Icon(Icons.message),
+              onPressed: _showQuestionsDialog,
+            ),
             SizedBox(height: 8),
             Row(
               children: <Widget>[
