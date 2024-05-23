@@ -1,3 +1,4 @@
+import 'package:class_light/home.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -162,6 +163,19 @@ class _UserPageState extends State<UserPage> {
                         ),
                       )
                     ],
+                  ),
+                ),
+                Positioned(
+                  top: 16,
+                  left: 16,
+                  child: IconButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => HomePage(courseCode: widget.inputCode.toString())),
+                      );
+                    },
+                    icon: const Icon(Icons.message),
                   ),
                 ),
                 Positioned(

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:math' as math;
 
 class HomePage extends StatefulWidget {
   final String courseCode;
@@ -12,20 +11,16 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int redLightCount = 0;
-  int yellowLightCount = 0;
-  int greenLightCount = 0;
   bool isLoading = true;
   String lecture = '';
-  List<String> questions = [];
 
   @override
   void initState() {
     super.initState();
-    fetchData();
+    fetchInitialData();
   }
 
-  Future<void> fetchData() async {
+  Future<void> fetchInitialData() async {
     try {
       DocumentSnapshot document = await FirebaseFirestore.instance
           .collection('room')
@@ -36,18 +31,14 @@ class _HomePageState extends State<HomePage> {
         var data = document.data() as Map<String, dynamic>?;
 
         setState(() {
-          redLightCount = data?['redLight'] != null ? (data!['redLight'] as List).length : 0;
-          yellowLightCount = data?['yellowLight'] != null ? (data!['yellowLight'] as List).length : 0;
-          greenLightCount = data?['greenLight'] != null ? (data!['greenLight'] as List).length : 0;
           lecture = data?['lecture'] ?? '';
-          questions = data?['question'] != null ? List<String>.from(data!['question']) : [];
           isLoading = false;
         });
       } else {
         print('Document does not exist');
       }
     } catch (e) {
-      print('Error fetching data: $e');
+      print('Error fetching initial data: $e');
     }
   }
 
@@ -55,28 +46,68 @@ class _HomePageState extends State<HomePage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Questions'),
-          content: Container(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: questions.length,
-              itemBuilder: (BuildContext context, int index) {
-                return ListTile(
-                  title: Text(questions[index]),
-                );
-              },
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Close'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+        return StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('room')
+              .doc(widget.courseCode)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return AlertDialog(
+                title: Text('Error'),
+                content: Text('Error: ${snapshot.error}'),
+                actions: <Widget>[
+                  TextButton(
+                    child: Text('Close'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            }
+            if (!snapshot.hasData) {
+              return AlertDialog(
+                title: Text('Loading'),
+                content: CircularProgressIndicator(),
+                actions: <Widget>[
+                  TextButton(
+                    child: Text('Close'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            }
+
+            var data = snapshot.data?.data() as Map<String, dynamic>?;
+            List<String> questions = data?['question'] != null ? List<String>.from(data!['question']) : [];
+
+            return AlertDialog(
+              title: Text('Questions'),
+              content: Container(
+                width: double.maxFinite,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: questions.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    return ListTile(
+                      title: Text(questions[index]),
+                    );
+                  },
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: Text('Close'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -84,51 +115,71 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    int total = redLightCount + yellowLightCount + greenLightCount;
-    double redPercentage = total > 0 ? (redLightCount / total) * 100 : 0;
-    double yellowPercentage = total > 0 ? (yellowLightCount / total) * 100 : 0;
-    double greenPercentage = total > 0 ? (greenLightCount / total) * 100 : 0;
-
     return Scaffold(
       appBar: AppBar(
         title: Text(lecture),
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
-          : Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            IconButton(
-              icon: Icon(Icons.message),
-              onPressed: _showQuestionsDialog,
-            ),
-            SizedBox(height: 8),
-            Row(
+          : StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('room')
+            .doc(widget.courseCode)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          if (!snapshot.hasData) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          var data = snapshot.data?.data() as Map<String, dynamic>?;
+          int redLightCount = data?['redLight'] != null ? (data!['redLight'] as List).length : 0;
+          int yellowLightCount = data?['yellowLight'] != null ? (data!['yellowLight'] as List).length : 0;
+          int greenLightCount = data?['greenLight'] != null ? (data!['greenLight'] as List).length : 0;
+
+          int total = redLightCount + yellowLightCount + greenLightCount;
+          double redPercentage = total > 0 ? (redLightCount / total) * 100 : 0;
+          double yellowPercentage = total > 0 ? (yellowLightCount / total) * 100 : 0;
+          double greenPercentage = total > 0 ? (greenLightCount / total) * 100 : 0;
+
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                buildLegend('Red', Colors.red, redPercentage),
-                buildLegend('Yellow', Colors.yellow, yellowPercentage),
-                buildLegend('Green', Colors.green, greenPercentage),
-              ],
-            ),
-            Expanded(
-              child: Center(
-                child: SizedBox(
-                  width: 300.0,
-                  height: 300.0,
-                  child: Stack(
-                    children: <Widget>[
-                      buildCircle('Red', redLightCount, Colors.red, 0),
-                      buildCircle('Yellow', yellowLightCount, Colors.yellow, 1),
-                      buildCircle('Green', greenLightCount, Colors.green, 2),
-                    ],
+                IconButton(
+                  icon: Icon(Icons.message),
+                  onPressed: _showQuestionsDialog,
+                ),
+                SizedBox(height: 8),
+                Row(
+                  children: <Widget>[
+                    buildLegend('Red', Colors.red, redPercentage),
+                    buildLegend('Yellow', Colors.yellow, yellowPercentage),
+                    buildLegend('Green', Colors.green, greenPercentage),
+                  ],
+                ),
+                Expanded(
+                  child: Center(
+                    child: SizedBox(
+                      width: 300.0,
+                      height: 300.0,
+                      child: Stack(
+                        children: <Widget>[
+                          buildCircle('Red', redLightCount, Colors.red, 0),
+                          buildCircle('Yellow', yellowLightCount, Colors.yellow, 1),
+                          buildCircle('Green', greenLightCount, Colors.green, 2),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

@@ -66,7 +66,7 @@ class CourseCodePage extends StatelessWidget {
                 // 새로운 페이지로 이동
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => HomePage(courseCode: courseCode.toString())),
+                  MaterialPageRoute(builder: (context) => HomePage(courseCode: 7926.toString())),
                 );
               },
               style: ElevatedButton.styleFrom(
