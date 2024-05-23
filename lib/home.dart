@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:badges/badges.dart' as badges;
 
 class HomePage extends StatefulWidget {
   final String courseCode;
@@ -13,6 +14,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   bool isLoading = true;
   String lecture = '';
+  int questionCount = 0;
 
   @override
   void initState() {
@@ -32,6 +34,7 @@ class _HomePageState extends State<HomePage> {
 
         setState(() {
           lecture = data?['lecture'] ?? '';
+          questionCount = data?['question'] != null ? (data!['question'] as List).length : 0;
           isLoading = false;
         });
       } else {
@@ -138,6 +141,7 @@ class _HomePageState extends State<HomePage> {
           int redLightCount = data?['redLight'] != null ? (data!['redLight'] as List).length : 0;
           int yellowLightCount = data?['yellowLight'] != null ? (data!['yellowLight'] as List).length : 0;
           int greenLightCount = data?['greenLight'] != null ? (data!['greenLight'] as List).length : 0;
+          questionCount = data?['question'] != null ? (data!['question'] as List).length : 0;
 
           int total = redLightCount + yellowLightCount + greenLightCount;
           double redPercentage = total > 0 ? (redLightCount / total) * 100 : 0;
@@ -149,9 +153,16 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                IconButton(
-                  icon: Icon(Icons.message),
-                  onPressed: _showQuestionsDialog,
+                badges.Badge(
+                  showBadge: questionCount > 0,
+                  badgeContent: Text(
+                    '$questionCount',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.message),
+                    onPressed: _showQuestionsDialog,
+                  ),
                 ),
                 SizedBox(height: 8),
                 Row(
@@ -164,8 +175,8 @@ class _HomePageState extends State<HomePage> {
                 Expanded(
                   child: Center(
                     child: SizedBox(
-                      width: 300.0,
-                      height: 300.0,
+                      width: 600.0,
+                      height: 600.0,
                       child: Stack(
                         children: <Widget>[
                           buildCircle('Red', redLightCount, Colors.red, 0),
