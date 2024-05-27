@@ -1,3 +1,4 @@
+import 'package:class_light/enterPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
@@ -66,7 +67,7 @@ class CourseCodePage extends StatelessWidget {
                 // 새로운 페이지로 이동
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => HomePage(courseCode: courseCode.toString())),
+                  MaterialPageRoute(builder: (context) => EnterPage2(inputCode: courseCode.toString())),
                 );
               },
               style: ElevatedButton.styleFrom(

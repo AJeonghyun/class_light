@@ -2,6 +2,9 @@ import 'package:class_light/home.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:get/get.dart';
+
+import 'activationController.dart';
 
 class UserPage extends StatefulWidget {
   final String inputCode; // EnterPage로부터 전달받을 inputCode
@@ -62,7 +65,8 @@ class _UserPageState extends State<UserPage> {
                       .collection('room')
                       .doc(widget.inputCode)
                       .update({
-                    'question': FieldValue.arrayUnion([_textFieldController.text])
+                    'question': FieldValue.arrayUnion(
+                        [_textFieldController.text])
                   });
                   _textFieldController.text = '';
                 }
@@ -80,12 +84,15 @@ class _UserPageState extends State<UserPage> {
   Widget build(BuildContext context) {
     FirebaseFirestore firestore = FirebaseFirestore.instance;
     return Scaffold(
-      body: FutureBuilder<DocumentSnapshot>(
-        future: firestore.collection('room').doc(widget.inputCode).get(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return const Text("Something went wrong");
-          }
+        body: GetBuilder<ActivationController>(
+        init: ActivationController(),
+    builder: (controller) {
+    return FutureBuilder<DocumentSnapshot>(
+    future: firestore.collection('room').doc(widget.inputCode).get(),
+    builder: (context, snapshot) {
+    if (snapshot.hasError) {
+    return const Text("Something went wrong");
+    }
 
           if (snapshot.connectionState == ConnectionState.done) {
             // 여기서 data를 Map<String, dynamic>으로 변환
@@ -145,18 +152,21 @@ class _UserPageState extends State<UserPage> {
                                 lightType: 'redLight',
                                 iconPath: 'assets/bad.png',
                                 label: 'Bad',
+                                isactivate: controller.isactivate.value,
                               ),
                               // yellow light
                               buildLightWidget(
                                 lightType: 'yellowLight',
                                 iconPath: 'assets/normal.png',
                                 label: 'Hard to understand',
+                                isactivate: controller.isactivate.value,
                               ),
                               // green light
                               buildLightWidget(
                                 lightType: 'greenLight',
                                 iconPath: 'assets/good.png',
                                 label: 'Good',
+                                isactivate: controller.isactivate.value,
                               ),
                             ],
                           ),
@@ -172,7 +182,8 @@ class _UserPageState extends State<UserPage> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => HomePage(courseCode: widget.inputCode.toString())),
+                        MaterialPageRoute(builder: (context) =>
+                            HomePage(courseCode: widget.inputCode.toString())),
                       );
                     },
                     icon: const Icon(Icons.message),
@@ -183,7 +194,9 @@ class _UserPageState extends State<UserPage> {
                   right: 16,
                   child: IconButton(
                     onPressed: () {
-                      _openEditPopup(context); // Open popup on edit icon tap
+                      print(controller.isactivate.value);
+                      controller.isactivate.value ?
+                      _openEditPopup(context) : null; // Open popup on edit icon tap
                     },
                     icon: const Icon(Icons.edit),
                   ),
@@ -229,8 +242,10 @@ class _UserPageState extends State<UserPage> {
           }
 
           return const Center(child: CircularProgressIndicator()); // 로딩 중
-        },
-      ),
+    },
+    );
+    },
+        ),
     );
   }
 
@@ -238,61 +253,61 @@ class _UserPageState extends State<UserPage> {
     required String lightType,
     required String iconPath,
     required String label,
+    required bool isactivate,
   }) {
     final isSelected = selectedLight == lightType;
 
     return Column(
       children: [
         InkWell(
-          onTap: () async {
+          onTap: isactivate
+              ? () async {
             final DocumentReference documentReference =
             FirebaseFirestore.instance.collection('room').doc(widget.inputCode);
 
             final DocumentSnapshot documentSnapshot =
             await documentReference.get();
             if (documentSnapshot.exists) {
-              // data를 Map<String, dynamic>으로 변환
               Map<String, dynamic> docData =
               documentSnapshot.data() as Map<String, dynamic>;
 
               final List<dynamic> lightList = docData[lightType] ?? [];
               if (lightList.contains(userId)) {
-                // userId가 이미 존재한다면 삭제
                 documentReference.update({
                   lightType: FieldValue.arrayRemove([userId])
                 });
                 setState(() {
-                  selectedLight = null; // 선택 해제
+                  selectedLight = null;
                 });
               } else {
-                // 선택된 다른 라이트를 먼저 삭제해야 함
                 if (selectedLight != null) {
                   documentReference.update({
                     selectedLight!: FieldValue.arrayRemove([userId])
                   });
                 }
-                // userId가 존재하지 않는다면 추가
                 documentReference.update({
                   lightType: FieldValue.arrayUnion([userId])
                 });
                 setState(() {
-                  selectedLight = lightType; // 선택된 라이트 갱신
+                  selectedLight = lightType;
                 });
               }
             }
-          },
+
+          }
+              : null, // isactivate가 false일 때 onTap을 null로 설정하여 비활성화
           child: Container(
             decoration: BoxDecoration(
               border: Border.all(
-                color: isSelected ? Colors.blue : Colors.transparent,
-                width: isSelected ? 4 : 0, // 선택된 경우 굵기를 4로 설정
+                color: isactivate ? Colors.blue : Colors.transparent,
+                width: isSelected ? 4 : 0,
               ),
               borderRadius: BorderRadius.circular(100),
             ),
             child: Image.asset(
               iconPath,
-              width: 170, // 너비를 200으로 설정
-              height: 170, // 높이를 200으로 설정
+              width: 170,
+              height: 170,
             ),
           ),
         ),
@@ -304,7 +319,7 @@ class _UserPageState extends State<UserPage> {
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: isSelected ? Colors.blue : null, // 선택된 경우 회색으로 변경
+            color: isSelected ? Colors.blue : null,
           ),
         )
       ],

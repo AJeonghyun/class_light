@@ -2,6 +2,9 @@ import 'package:class_light/userPage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'activationController.dart';
+import 'home.dart';
 
 
 class EnterPage extends StatefulWidget {
@@ -50,7 +53,7 @@ class _EnterPageState extends State<EnterPage> {
         Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => EnterPage2(inputCode: inputCode)));
+                builder: (context) => UserPage(inputCode: inputCode)));
       } else {
         // 문서가 존재하지 않으면 실행할 로직, 예를 들어 오류 메시지 표시
         print("문서가 존재하지 않습니다: $inputCode");
@@ -190,122 +193,129 @@ class _EnterPageState extends State<EnterPage> {
 }
 
 class EnterPage2 extends StatelessWidget {
-  final String inputCode; // EnterPage로부터 전달받을 inputCode
+  final String inputCode;
 
-  // 생성자에서 inputCode를 받습니다.
   const EnterPage2({Key? key, required this.inputCode}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // Firestore 인스턴스 생성
     FirebaseFirestore firestore = FirebaseFirestore.instance;
 
     return Scaffold(
-      body: FutureBuilder<DocumentSnapshot>(
-        future: firestore.collection('room').doc(inputCode).get(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return const Text("Something went wrong");
-          }
+      body: GetBuilder<ActivationController>(
+        init: ActivationController(),
+        builder: (controller) {
+          return FutureBuilder<DocumentSnapshot>(
+            future: firestore.collection('room').doc(inputCode).get(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return const Text("Something went wrong");
+              }
 
-          if (snapshot.connectionState == ConnectionState.done) {
-            Map<String, dynamic> data =
-            snapshot.data!.data() as Map<String, dynamic>;
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: <Widget>[
-                  SizedBox(
-                    height: 100,
-                  ),
-                  const Text(
-                    'Your class is',
-                    style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    "\" ${data['lecture']}\"",
-                    style: const TextStyle(
-                        color: Color(0xff83BCFF),
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(
-                    height: 40,
-                  ),
-                  const SizedBox(
-                    height: 40,
-                  ),
-                  InkWell(
-                    onTap: () async {
-                      // Firebase 익명 로그인
-                      try {
-                        final userCredential =
-                        await FirebaseAuth.instance.signInAnonymously();
-                        print("Signed in with temporary account.");
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => UserPage(
-                                  inputCode: inputCode,
-                                )));
-                      } on FirebaseAuthException catch (e) {
-                        switch (e.code) {
-                          case "operation-not-allowed":
-                            print(
-                                "Anonymous auth hasn't been enabled for this project.");
-                            break;
-                          default:
-                            print("Unknown error.");
-                        }
-                      }
-                    },
-                    child: Container(
-                      width: 300,
-                      height: 120,
-                      decoration: BoxDecoration(
-                          color: Color(0xff00FF47),
-                          borderRadius: BorderRadius.circular(20)),
-                      child: const Center(
-                        child: Text(
-                          'Activate',
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
+              if (snapshot.connectionState == ConnectionState.done) {
+                Map<String, dynamic> data =
+                snapshot.data!.data() as Map<String, dynamic>;
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: <Widget>[
+                      SizedBox(
+                        height: 100,
+                      ),
+                      const Text(
+                        'Your class is',
+                        style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        "\" ${data['lecture']}\"",
+                        style: const TextStyle(
+                            color: Color(0xff83BCFF),
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(
+                        height: 40,
+                      ),
+                      const SizedBox(
+                        height: 40,
+                      ),
+                      InkWell(
+                        onTap: () async {
+                          // Firebase 익명 로그인
+                          try {
+                            final userCredential =
+                            await FirebaseAuth.instance.signInAnonymously();
+                            print("Signed in with temporary account.");
+                            controller.activate();
+                            print(controller.isactivate.value);
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => HomePage(
+                                      courseCode: inputCode,
+                                    )));
+                          } on FirebaseAuthException catch (e) {
+                            switch (e.code) {
+                              case "operation-not-allowed":
+                                print(
+                                    "Anonymous auth hasn't been enabled for this project.");
+                                break;
+                              default:
+                                print("Unknown error.");
+                            }
+                          }
+                        },
+                        child: Container(
+                          width: 300,
+                          height: 120,
+                          decoration: BoxDecoration(
+                              color: Color(0xff00FF47),
+                              borderRadius: BorderRadius.circular(20)),
+                          child: const Center(
+                            child: Text(
+                              'Activate',
+                              style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  InkWell(
-                    onTap: () {
-                      // 현재 페이지에서 나가기
-                      Navigator.pop(context);
-                    },
-                    child: Container(
-                      width: 300,
-                      height: 120,
-                      decoration: BoxDecoration(
-                          color: Color(0xffC4C4C4),
-                          borderRadius: BorderRadius.circular(20)),
-                      child: const Center(
-                        child: Text(
-                          'Deactivate',
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
+                      const SizedBox(
+                        height: 20,
+                      ),
+                      InkWell(
+                        onTap: () {
+                          controller.deactivate();
+                          print(controller.isactivate.value);
+                        },
+                        child: Container(
+                          width: 300,
+                          height: 120,
+                          decoration: BoxDecoration(
+                              color: Color(0xffC4C4C4),
+                              borderRadius: BorderRadius.circular(20)),
+                          child: const Center(
+                            child: Text(
+                              'Deactivate',
+                              style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            );
-          }
+                );
+              }
 
-          return const Center(child: CircularProgressIndicator()); // 로딩 중
+              return const Center(child: CircularProgressIndicator());
+            },
+          );
         },
       ),
     );
