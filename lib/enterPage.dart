@@ -249,7 +249,7 @@ class EnterPage2 extends StatelessWidget {
                             final userCredential =
                             await FirebaseAuth.instance.signInAnonymously();
                             print("Signed in with temporary account.");
-                            controller.activate();
+                            controller.activate(inputCode);
                             print(controller.isactivate.value);
                             Navigator.push(
                                 context,
@@ -289,7 +289,7 @@ class EnterPage2 extends StatelessWidget {
                       ),
                       InkWell(
                         onTap: () {
-                          controller.deactivate();
+                          controller.deactivate(inputCode);
                           print(controller.isactivate.value);
                         },
                         child: Container(

@@ -4,10 +4,26 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
-import 'activationController.dart';
+class UserPageController extends GetxController {
+  RxBool isactivate = false.obs;
+
+  // Firestore의 'isactivate' 상태를 실시간으로 듣는 함수
+  void listenToActivateState(String inputCode) {
+    FirebaseFirestore.instance
+        .collection('room')
+        .doc(inputCode)
+        .snapshots()
+        .listen((snapshot) {
+      if (snapshot.exists) {
+        Map<String, dynamic> data = snapshot.data() as Map<String, dynamic>;
+        isactivate.value = data['isactivate'] ?? false;
+      }
+    });
+  }
+}
 
 class UserPage extends StatefulWidget {
-  final String inputCode; // EnterPage로부터 전달받을 inputCode
+  final String inputCode; // EnterPage로부터 전달받은 inputCode
 
   UserPage({Key? key, required this.inputCode}) : super(key: key);
 
@@ -16,6 +32,7 @@ class UserPage extends StatefulWidget {
 }
 
 class _UserPageState extends State<UserPage> {
+  final UserPageController userPageController = Get.put(UserPageController());
   String? userId; // 사용자 ID를 저장할 변수
   String? selectedLight; // 선택된 라이트를 저장할 변수
   TextEditingController _textFieldController = TextEditingController();
@@ -24,6 +41,7 @@ class _UserPageState extends State<UserPage> {
   void initState() {
     super.initState();
     getCurrentUserId(); // initState에서 사용자 ID를 가져오는 함수 호출
+    userPageController.listenToActivateState(widget.inputCode); // isactivate 상태 변경을 실시간으로 듣기
   }
 
   // 현재 로그인한 사용자의 ID를 가져오는 함수
@@ -65,8 +83,7 @@ class _UserPageState extends State<UserPage> {
                       .collection('room')
                       .doc(widget.inputCode)
                       .update({
-                    'question': FieldValue.arrayUnion(
-                        [_textFieldController.text])
+                    'question': FieldValue.arrayUnion([_textFieldController.text])
                   });
                   _textFieldController.text = '';
                 }
@@ -84,22 +101,17 @@ class _UserPageState extends State<UserPage> {
   Widget build(BuildContext context) {
     FirebaseFirestore firestore = FirebaseFirestore.instance;
     return Scaffold(
-        body: GetBuilder<ActivationController>(
-        init: ActivationController(),
-    builder: (controller) {
-    return FutureBuilder<DocumentSnapshot>(
-    future: firestore.collection('room').doc(widget.inputCode).get(),
-    builder: (context, snapshot) {
-    if (snapshot.hasError) {
-    return const Text("Something went wrong");
-    }
+      body: FutureBuilder<DocumentSnapshot>(
+        future: firestore.collection('room').doc(widget.inputCode).get(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Text("Something went wrong");
+          }
 
           if (snapshot.connectionState == ConnectionState.done) {
-            // 여기서 data를 Map<String, dynamic>으로 변환
             Map<String, dynamic> data =
             snapshot.data!.data() as Map<String, dynamic>;
 
-            // 'question' 필드가 존재하는지 확인하고 없으면 빈 리스트로 초기화
             List<dynamic> questions = data['question'] ?? [];
 
             return Stack(
@@ -148,26 +160,26 @@ class _UserPageState extends State<UserPage> {
                                 height: 20,
                               ),
                               //red Light
-                              buildLightWidget(
+                              Obx(() => buildLightWidget(
                                 lightType: 'redLight',
                                 iconPath: 'assets/bad.png',
                                 label: 'Bad',
-                                isactivate: controller.isactivate.value,
-                              ),
+                                isactivate: userPageController.isactivate.value,
+                              )),
                               // yellow light
-                              buildLightWidget(
+                              Obx(() => buildLightWidget(
                                 lightType: 'yellowLight',
                                 iconPath: 'assets/normal.png',
                                 label: 'Hard to understand',
-                                isactivate: controller.isactivate.value,
-                              ),
+                                isactivate: userPageController.isactivate.value,
+                              )),
                               // green light
-                              buildLightWidget(
+                              Obx(() => buildLightWidget(
                                 lightType: 'greenLight',
                                 iconPath: 'assets/good.png',
                                 label: 'Good',
-                                isactivate: controller.isactivate.value,
-                              ),
+                                isactivate: userPageController.isactivate.value,
+                              )),
                             ],
                           ),
                         ),
@@ -182,8 +194,7 @@ class _UserPageState extends State<UserPage> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) =>
-                            HomePage(courseCode: widget.inputCode.toString())),
+                        MaterialPageRoute(builder: (context) => HomePage(courseCode: widget.inputCode.toString())),
                       );
                     },
                     icon: const Icon(Icons.message),
@@ -194,8 +205,7 @@ class _UserPageState extends State<UserPage> {
                   right: 16,
                   child: IconButton(
                     onPressed: () {
-                      print(controller.isactivate.value);
-                      controller.isactivate.value ?
+                      userPageController.isactivate.value?
                       _openEditPopup(context) : null; // Open popup on edit icon tap
                     },
                     icon: const Icon(Icons.edit),
@@ -213,7 +223,6 @@ class _UserPageState extends State<UserPage> {
                       if (!snapshot.hasData) {
                         return Container();
                       }
-                      // data를 Map<String, dynamic>으로 변환
                       Map<String, dynamic> streamData =
                       snapshot.data!.data() as Map<String, dynamic>;
 
@@ -242,10 +251,8 @@ class _UserPageState extends State<UserPage> {
           }
 
           return const Center(child: CircularProgressIndicator()); // 로딩 중
-    },
-    );
-    },
-        ),
+        },
+      ),
     );
   }
 
@@ -293,13 +300,12 @@ class _UserPageState extends State<UserPage> {
                 });
               }
             }
-
           }
               : null, // isactivate가 false일 때 onTap을 null로 설정하여 비활성화
           child: Container(
             decoration: BoxDecoration(
               border: Border.all(
-                color: isactivate ? Colors.blue : Colors.transparent,
+                color: isSelected ? Colors.blue : Colors.transparent,
                 width: isSelected ? 4 : 0,
               ),
               borderRadius: BorderRadius.circular(100),
@@ -319,9 +325,9 @@ class _UserPageState extends State<UserPage> {
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: isSelected ? Colors.blue : null,
+            color: isSelected ? Colors.blue : null, // 선택된 경우 파란색으로 변경
           ),
-        )
+        ),
       ],
     );
   }
