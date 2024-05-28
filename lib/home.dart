@@ -89,6 +89,9 @@ class _HomePageState extends State<HomePage> {
 
             return AlertDialog(
               title: Text('Questions'),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(10))),
+                backgroundColor: Colors.white,
               content: Container(
                 width: double.maxFinite,
                 child: ListView.builder(
@@ -215,12 +218,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget buildCircle(String label, int count, Color color, int index) {
-    double size = 50.0 + count * 10.0;
+    double size = 50.0 + count * 12.0;
     double offsetX = (index - 1) * 100.0;
     double offsetY = (index % 2 == 0) ? 0 : 50.0;
 
     return Positioned(
-      left: 100 + offsetX,
+      left: 200 + offsetX,
       top: 100 + offsetY,
       child: CircleAvatar(
         backgroundColor: color,
